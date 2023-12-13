@@ -129,7 +129,7 @@ namespace BananaHackV2
             foreach (var file in Directory.GetFiles(folder)) {
                 PerformOcr(file);
             }            
-            Console.WriteLine("Done");            
+            Console.WriteLine("Done");
         }
     }
 }
