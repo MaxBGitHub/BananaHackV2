@@ -24,5 +24,32 @@ namespace BananaHackV2.UI.Components
         {
             InitializeComponent();
         }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            int m = monthPanel1.Month;
+            if (m - 1 < 1)
+            {
+                monthPanel1.Year--;
+                monthPanel1.Month = 12;
+            }
+            else {
+                monthPanel1.Month--;
+            }
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            int m = monthPanel1.Month;
+            if (m + 1 > 12)
+            {
+                monthPanel1.Year++;
+                monthPanel1.Month = 1;
+            }
+            else
+            {
+                monthPanel1.Month++;
+            }
+        }
     }
 }

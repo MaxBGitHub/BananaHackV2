@@ -80,7 +80,7 @@
     <Compile Include="UI\Components\FlowImageContainer.Designer.cs">
       <DependentUpon>FlowImageContainer.cs</DependentUpon>
     </Compile>
-    <Compile Include="UI\Components\MonthPanel.cs">
+    <Compile Include="UI\Components\ShiftMonthControl.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="UI\Components\ShiftOverview.cs">
@@ -98,6 +98,7 @@
     <Compile Include="UI\enums.cs" />
     <Compile Include="UI\KeyboardHook.cs" />
     <Compile Include="UI\KeyPresesdEventArgs.cs" />
+    <Compile Include="UI\RadialRect.cs" />
     <Compile Include="UI\ScreenshotEventArgs.cs" />
     <Compile Include="UI\WndMain.cs">
       <SubType>Form</SubType>
