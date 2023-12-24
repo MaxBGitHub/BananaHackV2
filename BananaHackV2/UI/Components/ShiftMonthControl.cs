@@ -2,7 +2,8 @@
 using System.Drawing;
 using System.Windows.Forms;
 using System.Collections.Generic;
-
+using System.Diagnostics;
+using System.Reflection;
 
 namespace BananaHackV2.UI.Components
 {
@@ -14,15 +15,16 @@ namespace BananaHackV2.UI.Components
     //  - Display shifts with user defined colors
     //  - Display shifts on mouse hover
     //  - Edit shifts during runtime via context menu
-    //  - Add events     
-    //      - OnSelectedDayChanged
-    //      - OnMonthChanged
-    //      - OnYearChanged
+    //  - Add events
     //      - OnShiftChanged
     //
     internal class ShiftMonthControl : Control
     {
         #region Member
+
+        private static readonly Func<Array, int, bool> IsIndex = (a, i) => {
+            return i > -1 && i < a.Length;
+        };
 
         private const int DAYSPERWEEK = 7;
 
@@ -37,24 +39,43 @@ namespace BananaHackV2.UI.Components
         private const int COLUMNCOUNT   = DAYSPERWEEK;
         private const int ROWCOUNT      = CALENDAR_DAYCOUNT / DAYSPERWEEK;
 
-        protected int MouseOverIndex = -1;
-        protected int SelectedIndex = -1;
+        private const int MAX_YEAR = 9999;
+        private const int MIN_YEAR =    1;
 
-        private int _dayWidth;
-        private int _dayHeight;
+        private const int MAX_MONTH = 12;
+        private const int MIN_MONTH =  1;
 
-        //// Since normal human beings start their week on a monday
-        //// and not on a sunday like some animals we need to define
-        //// our days of week in new order as the enum is not a bit field...
-        //protected DayOfWeek[] DaysOfWeek = new DayOfWeek[DAYSPERWEEK] {
-        //    DayOfWeek.Monday,
-        //    DayOfWeek.Tuesday,
-        //    DayOfWeek.Wednesday,
-        //    DayOfWeek.Thursday,
-        //    DayOfWeek.Friday,
-        //    DayOfWeek.Saturday,
-        //    DayOfWeek.Sunday,
-        //};
+        private float _dayWidth;  // The width of a single day rect.        
+        private float _dayHeight; // The height of single day rect.
+
+        private ToolTip _dateTip;
+
+
+        private int _mouseOverIndex = -1;
+        protected int MouseOverIndex
+        {
+            get {
+                return _mouseOverIndex;
+            }
+            set {
+                _mouseOverIndex = value;
+            }
+        }
+
+        private int _selectedIndex = -1;
+        protected int SelectedIndex
+        {
+            get {
+                return _selectedIndex;
+            }
+            set {
+                _selectedIndex = value;
+                if (IsIndex(_days, _selectedIndex)) {
+                    _selectedDate = _days[_selectedIndex];
+                }                
+            }
+        }               
+
 
         private DateTime[]  _days = new DateTime[CALENDAR_DAYCOUNT];
         protected DateTime[] Days 
@@ -64,8 +85,8 @@ namespace BananaHackV2.UI.Components
             } 
         }
 
-        private Rectangle[] _dayBounds = new Rectangle[CALENDAR_DAYCOUNT];
-        protected Rectangle[] DayBounds
+        private RectangleF[] _dayBounds = new RectangleF[CALENDAR_DAYCOUNT];
+        protected RectangleF[] DayBounds
         {
             get {
                 return _dayBounds;
@@ -77,6 +98,110 @@ namespace BananaHackV2.UI.Components
             Alignment = StringAlignment.Center,
             LineAlignment = StringAlignment.Center,
         };
+
+        #endregion
+
+
+        #region Events (custom and subscribable)
+
+        protected event EventHandler onSelectedDayChanged;
+        public event EventHandler SelectedDayChanged
+        {
+            add {
+                onSelectedDayChanged += value;
+            }
+            remove {
+                onSelectedDayChanged -= value;
+            }
+        }
+
+        protected virtual void OnSelectedDayChanged()
+        {
+            onSelectedDayChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+
+        protected event EventHandler onYearChanged;
+        public event EventHandler YearChanged
+        {
+            add {
+                onYearChanged += value;
+            }
+            remove {
+                onYearChanged -= value;
+            }
+        }
+
+        protected virtual void OnYearChanged()
+        {
+            onYearChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+
+        protected event EventHandler onMonthChanged;
+        public event EventHandler MonthChanged
+        {
+            add {
+                onMonthChanged += value;
+            }
+            remove {
+                onMonthChanged -= value;
+            }
+        }
+
+        protected virtual void OnMonthChanged()
+        {
+            onMonthChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+
+        private event EventHandler<PaintEventArgs> onPaintDays;
+        public event EventHandler<PaintEventArgs> PaintDays
+        {
+            add {
+                onPaintDays += value;
+            }
+            remove {
+                onPaintDays -= value;
+            }
+        }
+
+
+        private event EventHandler<PaintEventArgs> onPaintSelectedDay;
+        public event EventHandler<PaintEventArgs> PaintSelectedDay
+        {
+            add {
+                onPaintSelectedDay += value;
+            }
+            remove {
+                onPaintSelectedDay -= value;
+            }
+        }
+
+
+        private event EventHandler<PaintEventArgs> onPaintMouseOverDay;
+        public event EventHandler<PaintEventArgs> PaintMouseOverDay
+        {
+            add {
+                onPaintMouseOverDay += value;
+            }
+            remove {
+                onPaintMouseOverDay -= value;
+            }
+        }
+
+
+        private event EventHandler<PaintEventArgs> onPaintBorder;
+        public event EventHandler<PaintEventArgs> PaintBorder
+        {
+            add {
+                onPaintBorder += value;
+            }
+            remove {
+                onPaintBorder -= value;
+            }
+        }
+
 
         #endregion
 
@@ -135,10 +260,14 @@ namespace BananaHackV2.UI.Components
 
         private void InitTableLayout()
         {
+            if (this.Width == 0 && this.Height == 0) {
+                return;
+            }
+
             // The width for each day bounding rectangle.
-            _dayWidth = this.Width / COLUMNCOUNT;
+            _dayWidth = (float)this.Width / (float)COLUMNCOUNT;
             // The height for each day bounding rectangle.
-            _dayHeight = this.Height / ROWCOUNT;
+            _dayHeight = (float)this.Height / (float)ROWCOUNT;
 
             int index = -1;
             // Iterate over rows and columns
@@ -146,23 +275,15 @@ namespace BananaHackV2.UI.Components
             // for each single day.
             for (int y = 0; y < ROWCOUNT; y++) {
                 for (int x = 0; x < COLUMNCOUNT; x++) {
-                    int xc = x * _dayWidth;
-                    int yc = y * _dayHeight;
-                    _dayBounds[++index] = new Rectangle(
+                    float xc = x * _dayWidth;
+                    float yc = y * _dayHeight;
+                    _dayBounds[++index] = new RectangleF(
                         xc, yc, _dayWidth, _dayHeight);
                 }
             }
         }
 
         #endregion
-
-
-        private Dictionary<DateTime, ShiftType> _shifts = new Dictionary<DateTime, ShiftType>();
-        public void AddShift(int day, ShiftType shiftType)
-        {
-            DateTime target = new DateTime(_year, _month, day);
-            //int offset = 
-        }
 
 
         #region Border
@@ -185,6 +306,7 @@ namespace BananaHackV2.UI.Components
             }
             set {
                 _border = value;
+                Refresh();
             }
         }
 
@@ -221,6 +343,20 @@ namespace BananaHackV2.UI.Components
 
 
         #region Appearance
+
+        private static readonly Func<byte, Color, Color> ApplyAlphaCompositing = (a, c) =>
+        {
+            double linAlpha = a / 255.0;
+            int linR = 255 - c.R;
+            int linG = 255 - c.G;
+            int linB = 255 - c.B;
+            var result = Color.FromArgb(
+                (int)(linR * linAlpha + c.R),
+                (int)(linG * linAlpha + c.G),
+                (int)(linB * linAlpha + c.B));
+            return result;
+        };
+
 
         private Brush _foreBrush;
         public override Color ForeColor
@@ -274,6 +410,7 @@ namespace BananaHackV2.UI.Components
             }
         }
 
+        private Pen _highLightSelectedPen;
         private Brush _highlightBackBrush;
         private Color _highlightBackColor;
         public Color HighlightBackColor
@@ -285,6 +422,11 @@ namespace BananaHackV2.UI.Components
                 _highlightBackColor = value;
                 _highlightBackBrush?.Dispose();
                 _highlightBackBrush = new SolidBrush(_highlightBackColor);
+                Color highlightRectClr = ApplyAlphaCompositing(60, _highlightBackColor);
+                _highLightSelectedPen?.Dispose();
+                _highLightSelectedPen = new Pen(highlightRectClr) {
+                    DashStyle = System.Drawing.Drawing2D.DashStyle.Dash
+                };
             }
         }
 
@@ -363,7 +505,7 @@ namespace BananaHackV2.UI.Components
         #region Behaviour
 
         private bool _allowOutOfMonth = false;
-        public bool AllowOutOfMonth
+        public bool AllowOutOfMonthSelection
         {
             get {
                 return _allowOutOfMonth;
@@ -373,10 +515,84 @@ namespace BananaHackV2.UI.Components
             }
         }
 
+
+        private bool _freeze = false;
+        /// <summary>
+        /// Set to TRUE to disable the abillity 
+        /// to change the year or month.
+        /// </summary>
+        public bool Freeze
+        {
+            get {
+                return _freeze;
+            }
+            set {
+                _freeze = value;
+            }
+        }
+
+
+        private bool _showDateTip = false;
+        public bool ShowDateTip
+        {
+            get {
+                return _showDateTip;
+            }
+            set {
+                _showDateTip = value;
+                if (_showDateTip) {
+                    _dateTip?.Dispose();
+                    _dateTip = new ToolTip();
+                }
+                else {
+                    _dateTip?.Dispose();
+                    _dateTip = null;
+                }
+            }
+        }
+
+
+        private bool _renderOutOfMonth = true;
+        public bool RenderOutOfMonth
+        {
+            get {
+                return _renderOutOfMonth;
+            }
+            set {
+                _renderOutOfMonth = value;
+                Refresh();
+            }
+        }
+
         #endregion
 
 
         #region DateTime member
+
+        private int GetSelectedIndex(DateTime? selected, int month, int year)
+        {
+            if (!(selected.HasValue)) {
+                return -1;
+            }
+
+            int day = selected.Value.Day;
+            if (day > DateTime.DaysInMonth(year, month)) {
+                day = DateTime.DaysInMonth(year, month);
+            }
+            int index = _nFirst + day - 1;
+            return index;
+        }
+
+
+        private void UpdateControl()
+        {
+            DateTime? sel = SelectedDate;
+            SetDays();
+            InitTableLayout();
+            SelectedIndex = GetSelectedIndex(sel, _month, _year);
+            Invalidate();
+        }
+
 
         private int _year;
         public int Year
@@ -385,12 +601,20 @@ namespace BananaHackV2.UI.Components
                 return _year;
             }
             set {
-                if (_year != value) {
-                    _year = value;
-                    SetDays();
-                    InitTableLayout();
-                    Invalidate();
+                if (_freeze) {
+                    return;
                 }
+
+                if (value < MIN_YEAR || value > MAX_YEAR) {
+                    throw new ArgumentOutOfRangeException(nameof(Year));
+                }
+
+                if (_year == value) {
+                    return;
+                }
+                _year = value;
+                UpdateControl();
+                OnYearChanged();
             }
         }
 
@@ -403,16 +627,20 @@ namespace BananaHackV2.UI.Components
             }
             set {
                 
-                if (value < 1 || value > 12) {
-                    throw new ArgumentOutOfRangeException(nameof(value));
+                if (_freeze) {
+                    return;
                 }
 
-                if (value != _month) {
-                    _month = value;
-                    SetDays();
-                    InitTableLayout();
-                    Invalidate();
+                if (value < MIN_MONTH || value > MAX_MONTH) {
+                    throw new ArgumentOutOfRangeException(nameof(Month));
                 }
+
+                if (_month == value) {
+                    return;
+                }
+                _month = value;
+                UpdateControl();
+                OnMonthChanged();
             }
         }
 
@@ -438,11 +666,20 @@ namespace BananaHackV2.UI.Components
 
 
         private int _nSelected;
-        private DateTime _selectedDate;
-        public DateTime SelectedDate
+        private DateTime? _selectedDate;
+        public DateTime? SelectedDate
         {
             get {
                 return _selectedDate;
+            }
+            set {
+                _selectedDate = value;
+                if (_selectedDate != null) {                    
+                    _year = _selectedDate.Value.Year;
+                    _month = _selectedDate.Value.Month;                    
+                    UpdateControl();
+                    OnSelectedDayChanged();
+                }
             }
         }
 
@@ -461,41 +698,90 @@ namespace BananaHackV2.UI.Components
                 return;
             }
 
-
             for (int i = 0; i < _days.Length; i++) {
                 string day = _days[i].Day.ToString();
-                if (_days[i].Month == _month) {
+                bool isMonth = _days[i].Month == _month;
+                if (isMonth) {
                     e.Graphics.FillRectangle(_backBrush, _dayBounds[i]);
-                    e.Graphics.DrawString(day, Font, _foreBrush, _dayBounds[i], _format);
+                    e.Graphics.DrawString(day, 
+                        Font, 
+                        _foreBrush, 
+                        _dayBounds[i], 
+                        _format);
                 }
-                else {
+                else if (!(isMonth) && _renderOutOfMonth) {
                     e.Graphics.FillRectangle(_outOfMonthBackBrush, _dayBounds[i]);
-                    e.Graphics.DrawString(day, _outOfMonthFont, _outOfMonthForeBrush, _dayBounds[i], _format);
+                    e.Graphics.DrawString(day, 
+                        _outOfMonthFont, 
+                        _outOfMonthForeBrush, 
+                        _dayBounds[i], 
+                        _format);
                 }
             }
-        }
+        }        
+
+
+        private static readonly Func<RectangleF, RectangleF> GetFocusRect = (rc) => {
+            rc.X += 2;
+            rc.Y += 2;
+            rc.Width -= 4;
+            rc.Height -= 4;
+            return rc;
+        };
 
 
         protected virtual void OnPaintMouseOverDay(PaintEventArgs e)
         {
-            if (MouseOverIndex != -1) {
-                if (!(_allowOutOfMonth) && _days[MouseOverIndex].Month != _month) {
+            if (!(IsIndex(_dayBounds, MouseOverIndex))) {
+                return;
+            }
+
+            if (MouseOverIndex == SelectedIndex) {
+                RectangleF rc = GetFocusRect(_dayBounds[SelectedIndex]);                
+                e.Graphics.DrawRectangle(
+                    _highLightSelectedPen, 
+                    rc.X, rc.Y, 
+                    rc.Width, rc.Height);
+
+                return;
+            }
+
+            bool isMonth = _days[MouseOverIndex].Month == _month;
+            if (!(isMonth)) {
+                if (!(_allowOutOfMonth) || !(_renderOutOfMonth)) {
                     return;
                 }
-                e.Graphics.FillRectangle(_highlightBackBrush, _dayBounds[MouseOverIndex]);
-                e.Graphics.DrawString(_days[MouseOverIndex].Day.ToString(),
-                    _highlightFont, _highlightForeBrush, _dayBounds[MouseOverIndex], _format);
             }
+
+            e.Graphics.FillRectangle(
+                _highlightBackBrush, 
+                _dayBounds[MouseOverIndex]);
+
+            e.Graphics.DrawString(
+                _days[MouseOverIndex].Day.ToString(),
+                _highlightFont, 
+                _highlightForeBrush, 
+                _dayBounds[MouseOverIndex], 
+                _format);
         }
 
 
         protected virtual void OnPaintSelectedDay(PaintEventArgs e)
         {
-            if (SelectedIndex != -1) {
-                e.Graphics.FillRectangle(_selectedDayBackBrush, _dayBounds[SelectedIndex]);
-                e.Graphics.DrawString(_days[SelectedIndex].Day.ToString(),
-                    Font, _selectedDayForeBrush, _dayBounds[SelectedIndex], _format);
+            if (!(IsIndex(_dayBounds, SelectedIndex))) {
+                return;
             }
+
+            e.Graphics.FillRectangle(
+                _selectedDayBackBrush, 
+                _dayBounds[SelectedIndex]);
+
+            e.Graphics.DrawString(
+                _days[SelectedIndex].Day.ToString(),
+                Font, 
+                _selectedDayForeBrush, 
+                _dayBounds[SelectedIndex], 
+                _format);
         }
 
 
@@ -504,8 +790,8 @@ namespace BananaHackV2.UI.Components
             if ((DayBorder.Horizontal & _border) == DayBorder.Horizontal) {
                 for (int y = 0; y < CALENDAR_DAYCOUNT - (ROWCOUNT + 1); y += DAYSPERWEEK) {
                     int yc = y + DAYSPERWEEK - 1;
-                    Point ptStart = new Point(_dayBounds[y].Left, _dayBounds[y].Bottom);
-                    Point ptEnd = new Point(_dayBounds[yc].Right, _dayBounds[yc].Bottom);
+                    PointF ptStart = new PointF(_dayBounds[y].Left, _dayBounds[y].Bottom);
+                    PointF ptEnd = new PointF(_dayBounds[yc].Right, _dayBounds[yc].Bottom);
                     e.Graphics.DrawLine(_borderPen, ptStart, ptEnd);
                 }
             }
@@ -513,20 +799,37 @@ namespace BananaHackV2.UI.Components
             if ((DayBorder.Vertical & _border) == DayBorder.Vertical) {
                 for (int x = 0; x < COLUMNCOUNT - 1; x++) {
                     int xc = x + DAYSPERWEEK * (ROWCOUNT - 1);
-                    Point ptStart = new Point(_dayBounds[x].Right, _dayBounds[x].Top);
-                    Point ptEnd = new Point(_dayBounds[xc].Right, _dayBounds[xc].Bottom);
+                    PointF ptStart = new PointF(_dayBounds[x].Right, _dayBounds[x].Top);
+                    PointF ptEnd = new PointF(_dayBounds[xc].Right, _dayBounds[xc].Bottom);
                     e.Graphics.DrawLine(_borderPen, ptStart, ptEnd);
                 }
             }
         }
 
 
+        // 
+        // The order of which components are painted first is relevant.
+        // First step is to just paint all days in general.
+        // Second step is to paint the day where the mouse is currently over.
+        // Third step is to paint the selected / clicked day.
+        // Forth and last step is to paint the border.
+        //
+        // If we paint the border first it would be painted over by the other 
+        // paint handlers and would get lost.
+        //
         protected override void OnPaint(PaintEventArgs e)
         {
             OnPaintDays(e);
-            OnPaintMouseOverDay(e);
-            OnPaintBorder(e);
+            onPaintDays?.Invoke(this, e);
+
             OnPaintSelectedDay(e);
+            onPaintSelectedDay?.Invoke(this, e);
+
+            OnPaintMouseOverDay(e);
+            onPaintMouseOverDay?.Invoke(this, e);
+
+            OnPaintBorder(e);
+            onPaintBorder?.Invoke(this, e);
         }
 
         #endregion
@@ -534,42 +837,77 @@ namespace BananaHackV2.UI.Components
 
         #region Mouse handling and reactive painting
 
-        protected override void OnMouseMove(MouseEventArgs e)
-        {
-            base.OnMouseMove(e);
 
-            int x = e.Location.X / _dayWidth;
-            int y = e.Location.Y / _dayHeight;
+        private int GetIndexFromLocation(PointF pt)
+        {
+            // Get x and y position in grid.
+            int x = (int)(pt.X / _dayWidth);
+            int y = (int)(pt.Y / _dayHeight);                       
+
             int index = y * DAYSPERWEEK + x;
 
-            if (MouseOverIndex == -1) {
-                Invalidate(_dayBounds[index]);
-                MouseOverIndex = index;
+            //int xdiv = x / 7;
+            //int xmod = x % 7;
+            //if (xdiv == 1 && xmod == 0) {
+            //    index--;
+            //}
+
+            return index;
+        }
+
+
+        private void TryShowDateTip(int index)
+        {
+            bool isMonth = _days[index].Month == _month;
+            if (isMonth || (!(isMonth) && (_renderOutOfMonth && _allowOutOfMonth)))
+            {
+                _dateTip?.Show(
+                   _days[index].ToShortDateString(),
+                this,
+                   (int)_dayBounds[index].Left,
+                   (int)_dayBounds[index].Bottom);
+            }
+            else
+            {
+                _dateTip?.Hide(this);
+            }
+        }
+
+
+        protected override void OnMouseMove(MouseEventArgs e)
+        {
+            base.OnMouseMove(e);            
+
+            int index = GetIndexFromLocation(e.Location);
+            if (index == -1) {
+                return;
             }
 
-            if (MouseOverIndex != index) {
-                Invalidate(_dayBounds[MouseOverIndex]);                
-                Invalidate(_dayBounds[index]);
-                MouseOverIndex = index;
+            if (index >= _days.Length) {
+                index = _days.Length - 1;
             }
+
+            if ((MouseOverIndex == -1 && index != -1) || (MouseOverIndex != index)) {
+                MouseOverIndex = index;
+                TryShowDateTip(index);
+            }
+            Invalidate();
         }
 
 
         protected override void OnMouseEnter(EventArgs e)
         {
             base.OnMouseEnter(e);
-            Point pt = Cursor.Position;
-            pt = this.PointToClient(pt);
 
-            int x = pt.X / _dayWidth;
-            int y = pt.Y / _dayHeight;
-            int index = y * DAYSPERWEEK + x;
-            if (index > CALENDAR_DAYCOUNT) {
+            PointF pt = this.PointToClient(Cursor.Position);
+            int index = GetIndexFromLocation(pt);
+
+            if (index >= CALENDAR_DAYCOUNT) {
                 MouseOverIndex = -1;
             }
             else {
                 MouseOverIndex = index;
-                Invalidate(_dayBounds[index]);
+                Invalidate(/* Rectangle.Round(_dayBounds[index]) */);
             }
         }
 
@@ -586,29 +924,26 @@ namespace BananaHackV2.UI.Components
         {
             base.OnMouseClick(e);
 
-            int x = e.X / _dayWidth;
-            int y = e.Y / _dayHeight;
-            int index = y * DAYSPERWEEK + x;
-            if (index > CALENDAR_DAYCOUNT) {
+            int index = GetIndexFromLocation(e.Location);
+            if (!(IsIndex(_days, index))) {
                 SelectedIndex = -1;
                 return;
             }
 
-            if (!(AllowOutOfMonth) && _days[index].Month != _month) {
+            if (!(AllowOutOfMonthSelection) && _days[index].Month != _month) {
                 return;
             }
 
             if (SelectedIndex == -1) {
                 SelectedIndex = index;
-                _selectedDate = _days[SelectedIndex];
-                Invalidate(_dayBounds[SelectedIndex]);
+                _selectedDate = _days[SelectedIndex];                
             }
             else {
-                Invalidate(_dayBounds[SelectedIndex]);
                 SelectedIndex = index;
                 _selectedDate = _days[SelectedIndex];
-                Invalidate(_dayBounds[SelectedIndex]);
+                
             }
+            Invalidate(/* Rectangle.Round(_dayBounds[SelectedIndex]) */);
         }
 
         #endregion
@@ -653,12 +988,14 @@ namespace BananaHackV2.UI.Components
             this.DoubleBuffered = true;
 
             _selectedDate   = DateTime.Today;
-            _year           = _selectedDate.Year;
-            _month          = _selectedDate.Month;            
+            _year           = _selectedDate.Value.Year;
+            _month          = _selectedDate.Value.Month;
 
             InitFormats();
             SetDays();
             InitTableLayout();
+
+            SelectedIndex = GetSelectedIndex(_selectedDate, _month, _year);
         }
 
     }

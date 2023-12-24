@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Text;
@@ -27,29 +28,37 @@ namespace BananaHackV2.UI.Components
 
         private void button1_Click(object sender, EventArgs e)
         {
-            int m = monthPanel1.Month;
+            int m = shiftMonthControl1.Month;
             if (m - 1 < 1)
             {
-                monthPanel1.Year--;
-                monthPanel1.Month = 12;
+                shiftMonthControl1.Year--;
+                shiftMonthControl1.Month = 12;
             }
-            else {
-                monthPanel1.Month--;
+            else
+            {
+                shiftMonthControl1.Month--;
             }
+            Debug.WriteLine(shiftMonthControl1.FirstDayOfMonth);
         }
 
         private void button2_Click(object sender, EventArgs e)
         {
-            int m = monthPanel1.Month;
+            int m = shiftMonthControl1.Month;
             if (m + 1 > 12)
             {
-                monthPanel1.Year++;
-                monthPanel1.Month = 1;
+                shiftMonthControl1.Year++;
+                shiftMonthControl1.Month = 1;
             }
             else
             {
-                monthPanel1.Month++;
+                shiftMonthControl1.Month++;
             }
+            Debug.WriteLine(shiftMonthControl1.FirstDayOfMonth);
+        }
+
+        private void shiftMonthControl1_PaintDays(object sender, PaintEventArgs e)
+        {
+
         }
     }
 }
