@@ -74,13 +74,16 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="UI\ClipboardChangeEventArgs.cs" />
+    <Compile Include="UI\Components\CalendarControl.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="UI\Components\FlowImageContainer.cs">
       <SubType>UserControl</SubType>
     </Compile>
     <Compile Include="UI\Components\FlowImageContainer.Designer.cs">
       <DependentUpon>FlowImageContainer.cs</DependentUpon>
     </Compile>
-    <Compile Include="UI\Components\ShiftMonthControl.cs">
+    <Compile Include="UI\Components\MonthControl.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="UI\Components\ShiftOverview.cs">

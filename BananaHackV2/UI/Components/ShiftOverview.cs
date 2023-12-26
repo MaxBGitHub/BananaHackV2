@@ -28,33 +28,35 @@ namespace BananaHackV2.UI.Components
 
         private void button1_Click(object sender, EventArgs e)
         {
-            int m = shiftMonthControl1.Month;
-            if (m - 1 < 1)
-            {
-                shiftMonthControl1.Year--;
-                shiftMonthControl1.Month = 12;
-            }
-            else
-            {
-                shiftMonthControl1.Month--;
-            }
-            Debug.WriteLine(shiftMonthControl1.FirstDayOfMonth);
+            //int m = shiftMonthControl1.Month;
+            //if (m - 1 < 1)
+            //{
+            //    shiftMonthControl1.Year--;
+            //    shiftMonthControl1.Month = 12;
+            //}
+            //else
+            //{
+            //    shiftMonthControl1.Month--;
+            //}
+            //Debug.WriteLine(shiftMonthControl1.FirstDayOfMonth);
         }
+
 
         private void button2_Click(object sender, EventArgs e)
         {
-            int m = shiftMonthControl1.Month;
-            if (m + 1 > 12)
-            {
-                shiftMonthControl1.Year++;
-                shiftMonthControl1.Month = 1;
-            }
-            else
-            {
-                shiftMonthControl1.Month++;
-            }
-            Debug.WriteLine(shiftMonthControl1.FirstDayOfMonth);
+            //int m = shiftMonthControl1.Month;
+            //if (m + 1 > 12)
+            //{
+            //    shiftMonthControl1.Year++;
+            //    shiftMonthControl1.Month = 1;
+            //}
+            //else
+            //{
+            //    shiftMonthControl1.Month++;
+            //}
+            //Debug.WriteLine(shiftMonthControl1.FirstDayOfMonth);
         }
+
 
         private void shiftMonthControl1_PaintDays(object sender, PaintEventArgs e)
         {

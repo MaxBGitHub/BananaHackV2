@@ -41,7 +41,6 @@
             this.tabPage_MainWindow_Settings = new System.Windows.Forms.TabPage();
             this.tabPage_MainWindow_Log = new System.Windows.Forms.TabPage();
             this.tabPage_MainWindow_ShiftProcessing = new System.Windows.Forms.TabPage();
-            this.button1 = new System.Windows.Forms.Button();
             this.tabPage_MainWindow_ImageUpload = new System.Windows.Forms.TabPage();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.flowLayout_Images = new System.Windows.Forms.FlowLayoutPanel();
@@ -136,7 +135,6 @@
             // tabPage_MainWindow_ShiftProcessing
             // 
             this.tabPage_MainWindow_ShiftProcessing.Controls.Add(this.shiftOverview1);
-            this.tabPage_MainWindow_ShiftProcessing.Controls.Add(this.button1);
             this.tabPage_MainWindow_ShiftProcessing.ImageIndex = 0;
             this.tabPage_MainWindow_ShiftProcessing.Location = new System.Drawing.Point(4, 26);
             this.tabPage_MainWindow_ShiftProcessing.Name = "tabPage_MainWindow_ShiftProcessing";
@@ -145,16 +143,6 @@
             this.tabPage_MainWindow_ShiftProcessing.TabIndex = 0;
             this.tabPage_MainWindow_ShiftProcessing.Text = "Schicht Erkennung";
             this.tabPage_MainWindow_ShiftProcessing.UseVisualStyleBackColor = true;
-            // 
-            // button1
-            // 
-            this.button1.Location = new System.Drawing.Point(6, 6);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(75, 23);
-            this.button1.TabIndex = 0;
-            this.button1.Text = "button1";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
             // tabPage_MainWindow_ImageUpload
             // 
@@ -222,11 +210,10 @@
             // 
             // shiftOverview1
             // 
-            this.shiftOverview1.Dock = System.Windows.Forms.DockStyle.Top;
-            this.shiftOverview1.Location = new System.Drawing.Point(3, 3);
+            this.shiftOverview1.Location = new System.Drawing.Point(3, 6);
             this.shiftOverview1.Name = "shiftOverview1";
-            this.shiftOverview1.Size = new System.Drawing.Size(1000, 259);
-            this.shiftOverview1.TabIndex = 1;
+            this.shiftOverview1.Size = new System.Drawing.Size(995, 226);
+            this.shiftOverview1.TabIndex = 0;
             // 
             // WndMain
             // 
@@ -267,7 +254,6 @@
         private System.Windows.Forms.TabPage tabPage_MainWindow_Settings;
         private System.Windows.Forms.TabPage tabPage_MainWindow_Log;
         private System.Windows.Forms.TabPage tabPage_MainWindow_ShiftProcessing;
-        private System.Windows.Forms.Button button1;
         private System.Windows.Forms.TabPage tabPage_MainWindow_ImageUpload;
         private System.Windows.Forms.SplitContainer splitContainer1;
         private Components.UploadButton uploadButton_OcrImage;

@@ -38,7 +38,7 @@
             this.label1 = new System.Windows.Forms.Label();
             this.button1 = new System.Windows.Forms.Button();
             this.panel_EntryContainer = new System.Windows.Forms.Panel();
-            this.shiftMonthControl1 = new BananaHackV2.UI.Components.ShiftMonthControl();
+            this.calendarControl1 = new BananaHackV2.UI.Components.CalendarControl();
             this.toolStrip1.SuspendLayout();
             this.panel_SelectionContainer.SuspendLayout();
             this.panel_EntryContainer.SuspendLayout();
@@ -131,7 +131,8 @@
             // 
             // panel_EntryContainer
             // 
-            this.panel_EntryContainer.Controls.Add(this.shiftMonthControl1);
+            this.panel_EntryContainer.AutoScroll = true;
+            this.panel_EntryContainer.Controls.Add(this.calendarControl1);
             this.panel_EntryContainer.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panel_EntryContainer.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.panel_EntryContainer.Location = new System.Drawing.Point(301, 25);
@@ -139,32 +140,15 @@
             this.panel_EntryContainer.Size = new System.Drawing.Size(779, 234);
             this.panel_EntryContainer.TabIndex = 3;
             // 
-            // shiftMonthControl1
+            // calendarControl1
             // 
-            this.shiftMonthControl1.AllowOutOfMonthSelection = false;
-            this.shiftMonthControl1.BorderColor = System.Drawing.SystemColors.ControlText;
-            this.shiftMonthControl1.BorderStyle = BananaHackV2.UI.Components.ShiftMonthControl.DayBorder.None;
-            this.shiftMonthControl1.BorderThickness = 1;
-            this.shiftMonthControl1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.shiftMonthControl1.Freeze = false;
-            this.shiftMonthControl1.HighlightBackColor = System.Drawing.SystemColors.ButtonHighlight;
-            this.shiftMonthControl1.HighlightFont = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold);
-            this.shiftMonthControl1.HighlightForeColor = System.Drawing.SystemColors.ActiveCaption;
-            this.shiftMonthControl1.Location = new System.Drawing.Point(0, 0);
-            this.shiftMonthControl1.Month = 12;
-            this.shiftMonthControl1.Name = "shiftMonthControl1";
-            this.shiftMonthControl1.OutOfMonthBackColor = System.Drawing.SystemColors.Control;
-            this.shiftMonthControl1.OutOfMonthFont = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.shiftMonthControl1.OutOfMonthForeColor = System.Drawing.SystemColors.GrayText;
-            this.shiftMonthControl1.RenderOutOfMonth = true;
-            this.shiftMonthControl1.SelectedDate = new System.DateTime(2023, 12, 24, 0, 0, 0, 0);
-            this.shiftMonthControl1.SelectedDayBackColor = System.Drawing.SystemColors.Highlight;
-            this.shiftMonthControl1.SelectedDayForeColor = System.Drawing.SystemColors.HighlightText;
-            this.shiftMonthControl1.ShowDateTip = false;
-            this.shiftMonthControl1.Size = new System.Drawing.Size(779, 234);
-            this.shiftMonthControl1.TabIndex = 3;
-            this.shiftMonthControl1.Text = "shiftMonthControl1";
-            this.shiftMonthControl1.Year = 2023;
+            this.calendarControl1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.calendarControl1.Location = new System.Drawing.Point(0, 0);
+            this.calendarControl1.MaximumSize = new System.Drawing.Size(301, 234);
+            this.calendarControl1.Name = "calendarControl1";
+            this.calendarControl1.Size = new System.Drawing.Size(301, 234);
+            this.calendarControl1.TabIndex = 1;
+            this.calendarControl1.Text = "calendarControl1";
             // 
             // ShiftOverview
             // 
@@ -196,6 +180,6 @@
         private System.Windows.Forms.Panel panel_EntryContainer;
         private System.Windows.Forms.Button button2;
         private System.Windows.Forms.Button button1;
-        private ShiftMonthControl shiftMonthControl1;
+        private CalendarControl calendarControl1;
     }
 }
